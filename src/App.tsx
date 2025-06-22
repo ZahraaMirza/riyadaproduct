@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Check, Users, Award, ArrowLeft, MapPin, Shield } from 'lucide-react';
-import logo from './assets/branding-logo.png';
+import { Check, Users, Award, ArrowLeft, MapPin, Shield, Wifi, WifiOff } from 'lucide-react';
+import { supabase } from './lib/supabase';
+import { 
+  getBookings, 
+  createBooking, 
+  deleteAllBookings, 
+  getRooms, 
+  updateStartupSpots, 
+  resetAllStartupSpots,
+  initializeDefaultData 
+} from './lib/database';
+import type { Booking, Room } from './lib/supabase';
 
 interface Startup {
   id: string;
@@ -8,16 +18,36 @@ interface Startup {
   spots: number;
 }
 
-interface Room {
-  id: string;
-  name: string;
-  startups: Startup[];
+interface AppData {
+  bookings: Booking[];
+  rooms: Room[];
 }
 
-// Local storage keys
+// Default room configuration (fallback)
+const DEFAULT_ROOMS: Room[] = [
+  {
+    id: 'room1',
+    name: 'Room 1',
+    startups: [
+      { id: '1', name: 'Tamam', spots: 5, room_id: 'room1' },
+      { id: '2', name: 'Cater Me', spots: 5, room_id: 'room1' },
+      { id: '3', name: 'TellSaleem', spots: 5, room_id: 'room1' },
+      { id: '4', name: 'Twazn', spots: 5, room_id: 'room1' }
+    ]
+  },
+  {
+    id: 'room2',
+    name: 'Room 2',
+    startups: [
+      { id: '5', name: 'Soor', spots: 5, room_id: 'room2' },
+      { id: '6', name: 'Rentat', spots: 5, room_id: 'room2' },
+      { id: '7', name: 'Academity', spots: 5, room_id: 'room2' }
+    ]
+  }
+];
+
+// Local storage fallback for offline functionality
 const STORAGE_KEYS = {
-  BOOKINGS: 'product_demo_bookings',
-  ROOMS: 'product_demo_rooms',
   ADMIN_STATUS: 'product_demo_admin_status',
   SELECTED_STARTUPS: 'product_demo_selected_startups',
   SELECTED_ROOM: 'product_demo_selected_room',
@@ -26,30 +56,6 @@ const STORAGE_KEYS = {
   COUNTRY_CODE: 'product_demo_country_code'
 };
 
-// Default room configuration
-const DEFAULT_ROOMS: Room[] = [
-  {
-    id: 'room1',
-    name: 'Room 1',
-    startups: [
-      { id: '1', name: 'Tamam', spots: 5 },
-      { id: '2', name: 'Cater Me', spots: 5 },
-      { id: '3', name: 'TellSaleem', spots: 5 },
-      { id: '4', name: 'Twazn', spots: 5 }
-    ]
-  },
-  {
-    id: 'room2',
-    name: 'Room 2',
-    startups: [
-      { id: '5', name: 'Soor', spots: 5 },
-      { id: '6', name: 'Rentat', spots: 5 },
-      { id: '7', name: 'Academity', spots: 5 }
-    ]
-  }
-];
-
-// Helper functions for localStorage
 const saveToStorage = (key: string, data: any) => {
   try {
     localStorage.setItem(key, JSON.stringify(data));
@@ -76,18 +82,82 @@ function App() {
   const [showForm, setShowForm] = useState(false);
   const [userName, setUserName] = useState('');
   const [userPhone, setUserPhone] = useState('');
-  const [bookings, setBookings] = useState<{ name: string; phone: string; startups: string[] }[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [adminPassword, setAdminPassword] = useState('');
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [selectedCountryCode, setSelectedCountryCode] = useState('973');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [rooms, setRooms] = useState<Room[]>(DEFAULT_ROOMS);
+  const [isConnected, setIsConnected] = useState(false);
 
-  // Load data from localStorage on component mount
+  // Initialize Supabase and load data
   useEffect(() => {
-    const savedBookings = loadFromStorage(STORAGE_KEYS.BOOKINGS, []);
-    const savedRooms = loadFromStorage(STORAGE_KEYS.ROOMS, DEFAULT_ROOMS);
+    const initializeApp = async () => {
+      try {
+        // Initialize default data if needed
+        await initializeDefaultData();
+        
+        // Load initial data
+        const [bookingsData, roomsData] = await Promise.all([
+          getBookings(),
+          getRooms()
+        ]);
+        
+        setBookings(bookingsData);
+        setRooms(roomsData);
+        setIsConnected(true);
+      } catch (error) {
+        console.error('Error initializing app:', error);
+        setIsConnected(false);
+      }
+    };
+
+    initializeApp();
+  }, []);
+
+  // Set up real-time subscriptions
+  useEffect(() => {
+    // Subscribe to bookings changes
+    const bookingsSubscription = supabase
+      .channel('bookings')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'bookings' },
+        async () => {
+          try {
+            const newBookings = await getBookings();
+            setBookings(newBookings);
+          } catch (error) {
+            console.error('Error fetching updated bookings:', error);
+          }
+        }
+      )
+      .subscribe();
+
+    // Subscribe to startups changes
+    const startupsSubscription = supabase
+      .channel('startups')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'startups' },
+        async () => {
+          try {
+            const newRooms = await getRooms();
+            setRooms(newRooms);
+          } catch (error) {
+            console.error('Error fetching updated rooms:', error);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(bookingsSubscription);
+      supabase.removeChannel(startupsSubscription);
+    };
+  }, []);
+
+  // Load user-specific data from localStorage (for offline functionality)
+  useEffect(() => {
     const savedAdminStatus = loadFromStorage(STORAGE_KEYS.ADMIN_STATUS, false);
     const savedSelectedStartups = loadFromStorage(STORAGE_KEYS.SELECTED_STARTUPS, []);
     const savedSelectedRoom = loadFromStorage(STORAGE_KEYS.SELECTED_ROOM, null);
@@ -95,8 +165,6 @@ function App() {
     const savedUserPhone = loadFromStorage(STORAGE_KEYS.USER_PHONE, '');
     const savedCountryCode = loadFromStorage(STORAGE_KEYS.COUNTRY_CODE, '973');
 
-    setBookings(savedBookings);
-    setRooms(savedRooms);
     setIsAdmin(savedAdminStatus);
     setSelectedStartups(savedSelectedStartups);
     setSelectedRoom(savedSelectedRoom);
@@ -105,15 +173,7 @@ function App() {
     setSelectedCountryCode(savedCountryCode);
   }, []);
 
-  // Save data to localStorage whenever it changes
-  useEffect(() => {
-    saveToStorage(STORAGE_KEYS.BOOKINGS, bookings);
-  }, [bookings]);
-
-  useEffect(() => {
-    saveToStorage(STORAGE_KEYS.ROOMS, rooms);
-  }, [rooms]);
-
+  // Save user-specific data to localStorage (for offline functionality)
   useEffect(() => {
     saveToStorage(STORAGE_KEYS.ADMIN_STATUS, isAdmin);
   }, [isAdmin]);
@@ -155,6 +215,18 @@ function App() {
     setSelectedRoom(null);
   };
 
+  // Connection status indicator
+  const ConnectionStatus = () => (
+    <div className={`fixed top-6 left-6 z-50 flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium ${
+      isConnected 
+        ? 'bg-green-100 text-green-800 border border-green-200' 
+        : 'bg-red-100 text-red-800 border border-red-200'
+    }`}>
+      {isConnected ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
+      {isConnected ? 'Connected' : 'Disconnected'}
+    </div>
+  );
+
   // Floating Admin Login Button (always visible on user view)
   const AdminButton = (
     <button
@@ -167,16 +239,28 @@ function App() {
   );
 
   if (isAdmin) {
-    // Group bookings by startup and by room
-    const startupBookings: { [startup: string]: { name: string; phone: string; room: string }[] } = {};
+    // Create a map of all startups for easy lookup
+    const allStartups = new Map<string, { name: string; roomName: string }>();
+    rooms.forEach(room => {
+        room.startups.forEach(startup => {
+            allStartups.set(startup.id, { name: startup.name, roomName: room.name });
+        });
+    });
+
+    // Group bookings by startup name
+    const startupBookings: { [startupName: string]: { name: string; phone: string; room: string }[] } = {};
     bookings.forEach(b => {
-      b.startups.forEach(s => {
-        // Find the room for this startup
-        const room = rooms.find(r => r.startups.some(st => st.name === s));
-        const roomName = room ? room.name : '';
-        if (!startupBookings[s]) startupBookings[s] = [];
-        startupBookings[s].push({ name: b.name, phone: b.phone, room: roomName });
-      });
+        b.startups.forEach(startupId => {
+            const startupInfo = allStartups.get(startupId);
+            if (startupInfo) {
+                const startupName = startupInfo.name;
+                const roomName = startupInfo.roomName;
+                if (!startupBookings[startupName]) {
+                    startupBookings[startupName] = [];
+                }
+                startupBookings[startupName].push({ name: b.name, phone: b.phone, room: roomName });
+            }
+        });
     });
     // Custom confirmation modal for reset
     if (showResetConfirm) {
@@ -188,16 +272,16 @@ function App() {
             <div className="flex gap-4 w-full">
               <button
                 className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full"
-                onClick={() => {
-                  setBookings([]);
-                  setRooms(DEFAULT_ROOMS);
-                  setShowResetConfirm(false);
-                  // Clear all localStorage data
-                  Object.values(STORAGE_KEYS).forEach(key => {
-                    if (key !== STORAGE_KEYS.ADMIN_STATUS) {
-                      localStorage.removeItem(key);
-                    }
-                  });
+                onClick={async () => {
+                  try {
+                    await Promise.all([
+                      deleteAllBookings(),
+                      resetAllStartupSpots()
+                    ]);
+                    setShowResetConfirm(false);
+                  } catch (error) {
+                    alert('Error resetting data. Please try again.');
+                  }
                 }}
               >
                 Yes, Reset
@@ -215,6 +299,7 @@ function App() {
     }
     return (
       <div className="min-h-screen bg-gradient-to-br from-white via-green-50 to-green-100 p-8">
+        <ConnectionStatus />
         {/* Admin button not shown in admin view */}
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-[#2B4A3D]">Admin Dashboard</h1>
@@ -251,15 +336,17 @@ function App() {
               <tbody>
                 {bookings.map((b, i) => {
                   // Find the room for the first startup in the booking
-                  const firstStartup = b.startups[0];
-                  const room = rooms.find(r => r.startups.some(st => st.name === firstStartup));
+                  const firstStartupId = b.startups[0];
+                  const room = rooms.find(r => r.startups.some(st => st.id === firstStartupId));
                   const roomName = room ? room.name : '';
+                  const startupNames = b.startups.map(id => allStartups.get(id)?.name || id).join(', ');
+
                   return (
-                    <tr key={i} className="border-b hover:bg-[#7ACDB9]/10">
+                    <tr key={b.id || i} className="border-b hover:bg-[#7ACDB9]/10">
                       <td className="py-2 px-4 font-semibold">{i + 1}</td>
                       <td className="py-2 px-4">{b.name}</td>
                       <td className="py-2 px-4">{b.phone}</td>
-                      <td className="py-2 px-4">{b.startups.join(', ')}</td>
+                      <td className="py-2 px-4">{startupNames}</td>
                       <td className="py-2 px-4">{roomName}</td>
                     </tr>
                   );
@@ -309,6 +396,7 @@ function App() {
   if (showAdminLogin) {
     return (
       <>
+        <ConnectionStatus />
         {AdminButton}
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-green-50 to-green-100">
           <div className="bg-white rounded-xl shadow-lg p-8 border border-[#7ACDB9]/40 w-full max-w-sm">
@@ -349,12 +437,13 @@ function App() {
   if (!selectedRoom) {
     return (
       <>
+        <ConnectionStatus />
         {AdminButton}
         <div className="min-h-screen bg-gradient-to-br from-white via-green-50 to-green-100">
           <div className="container mx-auto px-4 py-8">
             {/* Branding Logo */}
             <div className="flex justify-center mb-10">
-              <img src={logo} alt="Tamkeen Riyada Logo" className="h-20 md:h-28" />
+              <img src="/branding-logo.png" alt="Tamkeen Riyada Logo" className="h-20 md:h-28" />
             </div>
             {/* Header */}
             <div className="text-center mb-12">
@@ -426,37 +515,51 @@ function App() {
     }
     return (
       <>
+        <ConnectionStatus />
         {AdminButton}
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-green-50 to-green-100">
           <div className="bg-white rounded-2xl shadow-lg p-10 border border-[#7ACDB9]/40 w-full max-w-lg md:max-w-lg flex flex-col items-center" style={{ boxShadow: '0 4px 24px 0 rgba(122,205,185,0.10)' }}>
             <h2 className="text-2xl font-bold mb-6 text-[#2B4A3D] text-center">Complete Your Booking</h2>
             <form
               className="w-full"
-              onSubmit={e => {
+              onSubmit={async (e) => {
                 e.preventDefault();
-                setBookings([...bookings, {
-                  name: userName,
-                  phone: `+${selectedCountryCode}${userPhone}`,
-                  startups: currentRoom?.startups.filter(s => selectedStartups.includes(s.id)).map(s => s.name) || []
-                }]);
-                setRooms(prevRooms => prevRooms.map(room =>
-                  room.id !== currentRoom?.id ? room : {
-                    ...room,
-                    startups: room.startups.map(s =>
-                      selectedStartups.includes(s.id)
-                        ? { ...s, spots: Math.max(0, s.spots - 1) }
-                        : s
-                    )
-                  }
-                ));
-                setShowSuccess(true);
-                setTimeout(() => {
-                  setShowSuccess(false);
-                  setShowForm(false);
-                  setSelectedStartups([]);
-                  setUserName('');
-                  setUserPhone('');
-                }, 2500);
+                console.log('Selected Startups:', selectedStartups);
+                console.log('Selected Room:', selectedRoom);
+
+                try {
+                  const booking = {
+                    name: userName,
+                    phone: `+${selectedCountryCode}${userPhone}`,
+                    startups: selectedStartups, // Use the IDs from the state
+                    room_id: selectedRoom!
+                  };
+
+                  // Create booking
+                  await createBooking(booking);
+                  
+                  // Update startup spots
+                  const updatePromises = selectedStartups.map(startupId => {
+                    const startup = currentRoom?.startups.find(s => s.id === startupId);
+                    if (startup && startup.spots > 0) {
+                      return updateStartupSpots(startupId, startup.spots - 1);
+                    }
+                    return Promise.resolve();
+                  });
+                  
+                  await Promise.all(updatePromises);
+                  
+                  setShowSuccess(true);
+                  setTimeout(() => {
+                    setShowSuccess(false);
+                    setShowForm(false);
+                    setSelectedStartups([]);
+                    setUserName('');
+                    setUserPhone('');
+                  }, 2500);
+                } catch (error) {
+                  alert('Error submitting booking. Please try again.');
+                }
               }}
             >
               <div className="flex flex-col gap-4 mb-6 w-full">
@@ -520,12 +623,13 @@ function App() {
 
   return (
     <>
+      <ConnectionStatus />
       {AdminButton}
       <div className="min-h-screen bg-gradient-to-br from-white via-green-50 to-green-100">
         <div className="container mx-auto px-4 py-8">
           {/* Branding Logo */}
           <div className="flex justify-center mb-10">
-            <img src={logo} alt="Tamkeen Riyada Logo" className="h-20 md:h-28" />
+            <img src="/branding-logo.png" alt="Tamkeen Riyada Logo" className="h-20 md:h-28" />
           </div>
           {/* Header */}
           <div className="text-center mb-12">
