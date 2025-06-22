@@ -76,10 +76,16 @@ export const resetAllStartupSpots = async (): Promise<void> => {
   const { error } = await supabase
     .from('startups')
     .update({ spots: 5 })
+    .neq('id', 0)
 
-  if (error) {
-    console.error('Error resetting startup spots:', error)
-    throw error
+  const { error: bookingsError } = await supabase
+    .from('bookings')
+    .delete()
+    .neq('id', 0) // Delete all records
+
+  if (error || bookingsError) {
+    console.error('Error resetting startup spots:', error || bookingsError)
+    throw error || bookingsError
   }
 }
 
