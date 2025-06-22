@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Check, Users, Award, ArrowLeft, MapPin, Shield } from 'lucide-react';
 import logo from './assets/branding-logo.png';
 
@@ -14,6 +14,60 @@ interface Room {
   startups: Startup[];
 }
 
+// Local storage keys
+const STORAGE_KEYS = {
+  BOOKINGS: 'product_demo_bookings',
+  ROOMS: 'product_demo_rooms',
+  ADMIN_STATUS: 'product_demo_admin_status',
+  SELECTED_STARTUPS: 'product_demo_selected_startups',
+  SELECTED_ROOM: 'product_demo_selected_room',
+  USER_NAME: 'product_demo_user_name',
+  USER_PHONE: 'product_demo_user_phone',
+  COUNTRY_CODE: 'product_demo_country_code'
+};
+
+// Default room configuration
+const DEFAULT_ROOMS: Room[] = [
+  {
+    id: 'room1',
+    name: 'Room 1',
+    startups: [
+      { id: '1', name: 'Tamam', spots: 5 },
+      { id: '2', name: 'Cater Me', spots: 5 },
+      { id: '3', name: 'TellSaleem', spots: 5 },
+      { id: '4', name: 'Twazn', spots: 5 }
+    ]
+  },
+  {
+    id: 'room2',
+    name: 'Room 2',
+    startups: [
+      { id: '5', name: 'Soor', spots: 5 },
+      { id: '6', name: 'Rentat', spots: 5 },
+      { id: '7', name: 'Academity', spots: 5 }
+    ]
+  }
+];
+
+// Helper functions for localStorage
+const saveToStorage = (key: string, data: any) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (error) {
+    console.error('Error saving to localStorage:', error);
+  }
+};
+
+const loadFromStorage = (key: string, defaultValue: any) => {
+  try {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : defaultValue;
+  } catch (error) {
+    console.error('Error loading from localStorage:', error);
+    return defaultValue;
+  }
+};
+
 function App() {
   const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
   const [selectedStartups, setSelectedStartups] = useState<string[]>([]);
@@ -28,28 +82,61 @@ function App() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [selectedCountryCode, setSelectedCountryCode] = useState('973');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [rooms, setRooms] = useState<Room[]>(DEFAULT_ROOMS);
 
-  const [rooms, setRooms] = useState<Room[]>([
-    {
-      id: 'room1',
-      name: 'Room 1',
-      startups: [
-        { id: '1', name: 'Tamam', spots: 5 },
-        { id: '2', name: 'Cater Me', spots: 5 },
-        { id: '3', name: 'TellSaleem', spots: 5 },
-        { id: '4', name: 'Twazn', spots: 5 }
-      ]
-    },
-    {
-      id: 'room2',
-      name: 'Room 2',
-      startups: [
-        { id: '5', name: 'Soor', spots: 5 },
-        { id: '6', name: 'Rentat', spots: 5 },
-        { id: '7', name: 'Academity', spots: 5 }
-      ]
-    }
-  ]);
+  // Load data from localStorage on component mount
+  useEffect(() => {
+    const savedBookings = loadFromStorage(STORAGE_KEYS.BOOKINGS, []);
+    const savedRooms = loadFromStorage(STORAGE_KEYS.ROOMS, DEFAULT_ROOMS);
+    const savedAdminStatus = loadFromStorage(STORAGE_KEYS.ADMIN_STATUS, false);
+    const savedSelectedStartups = loadFromStorage(STORAGE_KEYS.SELECTED_STARTUPS, []);
+    const savedSelectedRoom = loadFromStorage(STORAGE_KEYS.SELECTED_ROOM, null);
+    const savedUserName = loadFromStorage(STORAGE_KEYS.USER_NAME, '');
+    const savedUserPhone = loadFromStorage(STORAGE_KEYS.USER_PHONE, '');
+    const savedCountryCode = loadFromStorage(STORAGE_KEYS.COUNTRY_CODE, '973');
+
+    setBookings(savedBookings);
+    setRooms(savedRooms);
+    setIsAdmin(savedAdminStatus);
+    setSelectedStartups(savedSelectedStartups);
+    setSelectedRoom(savedSelectedRoom);
+    setUserName(savedUserName);
+    setUserPhone(savedUserPhone);
+    setSelectedCountryCode(savedCountryCode);
+  }, []);
+
+  // Save data to localStorage whenever it changes
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.BOOKINGS, bookings);
+  }, [bookings]);
+
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.ROOMS, rooms);
+  }, [rooms]);
+
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.ADMIN_STATUS, isAdmin);
+  }, [isAdmin]);
+
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.SELECTED_STARTUPS, selectedStartups);
+  }, [selectedStartups]);
+
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.SELECTED_ROOM, selectedRoom);
+  }, [selectedRoom]);
+
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.USER_NAME, userName);
+  }, [userName]);
+
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.USER_PHONE, userPhone);
+  }, [userPhone]);
+
+  useEffect(() => {
+    saveToStorage(STORAGE_KEYS.COUNTRY_CODE, selectedCountryCode);
+  }, [selectedCountryCode]);
 
   const currentRoom = rooms.find(room => room.id === selectedRoom);
   const canVoteMore = selectedStartups.length < maxVotes;
@@ -103,11 +190,14 @@ function App() {
                 className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full"
                 onClick={() => {
                   setBookings([]);
-                  setRooms(prevRooms => prevRooms.map(room => ({
-                    ...room,
-                    startups: room.startups.map(s => ({ ...s, spots: 5 }))
-                  })));
+                  setRooms(DEFAULT_ROOMS);
                   setShowResetConfirm(false);
+                  // Clear all localStorage data
+                  Object.values(STORAGE_KEYS).forEach(key => {
+                    if (key !== STORAGE_KEYS.ADMIN_STATUS) {
+                      localStorage.removeItem(key);
+                    }
+                  });
                 }}
               >
                 Yes, Reset
