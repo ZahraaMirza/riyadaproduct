@@ -11,6 +11,7 @@ import {
   initializeDefaultData 
 } from './lib/database';
 import type { Booking, Room } from './lib/supabase';
+import brandingLogo from './assets/branding-logo.png';
 
 interface Startup {
   id: string;
@@ -443,7 +444,7 @@ function App() {
           <div className="container mx-auto px-4 py-8">
             {/* Branding Logo */}
             <div className="flex justify-center mb-10">
-              <img src="/src/assets/branding-logo.png" alt="Tamkeen Riyada Logo" className="h-20 md:h-28" />
+              <img src={brandingLogo} alt="Tamkeen Riyada Logo" className="h-20 md:h-28" />
             </div>
             {/* Header */}
             <div className="text-center mb-12">
@@ -629,7 +630,7 @@ function App() {
         <div className="container mx-auto px-4 py-8">
           {/* Branding Logo */}
           <div className="flex justify-center mb-10">
-            <img src="/src/assets/branding-logo.png" alt="Tamkeen Riyada Logo" className="h-20 md:h-28" />
+            <img src={brandingLogo} alt="Tamkeen Riyada Logo" className="h-20 md:h-28" />
           </div>
           {/* Header */}
           <div className="text-center mb-12">
