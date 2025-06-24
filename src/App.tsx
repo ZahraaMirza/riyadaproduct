@@ -228,10 +228,10 @@ function App() {
     </div>
   );
 
-  // Floating Admin Login Button (always visible on user view)
+  // AdminButton: fixed, only on md and up
   const AdminButton = (
     <button
-      className="fixed top-6 right-6 z-50 bg-[#7ACDB9] hover:bg-[#5bb99e] text-white font-bold py-3 px-6 rounded-full shadow-lg flex items-center gap-2 transition-all"
+      className="hidden md:flex fixed top-6 right-6 z-50 bg-[#7ACDB9] hover:bg-[#5bb99e] text-white font-bold py-3 px-6 rounded-full shadow-lg items-center gap-2 transition-all"
       onClick={() => setShowAdminLogin(true)}
       style={{ boxShadow: '0 4px 24px 0 rgba(122,205,185,0.15)' }}
     >
@@ -299,92 +299,86 @@ function App() {
       );
     }
     return (
-      <div className="min-h-screen bg-gradient-to-br from-white via-green-50 to-green-100 p-8">
+      <div className="min-h-screen bg-gradient-to-br from-white via-green-50 to-green-100 p-2 md:p-8">
         <ConnectionStatus />
-        {/* Admin button not shown in admin view */}
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-[#2B4A3D]">Admin Dashboard</h1>
-          <div className="flex gap-4">
-            <button
-              className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-full text-md shadow-lg"
-              onClick={() => setShowResetConfirm(true)}
-            >
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 md:mb-8 gap-2">
+          <h1 className="text-xl md:text-3xl font-bold text-[#2B4A3D]">Admin Dashboard</h1>
+          <div className="flex flex-col md:flex-row gap-2">
+            <button className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 md:px-6 rounded-full text-sm md:text-md shadow-lg" onClick={() => setShowResetConfirm(true)}>
               Reset All Bookings
             </button>
-            <button
-              className="bg-[#7ACDB9] hover:bg-[#5bb99e] text-white font-bold py-2 px-6 rounded-full text-md shadow-lg"
-              onClick={() => setIsAdmin(false)}
-            >
+            <button className="bg-[#7ACDB9] hover:bg-[#5bb99e] text-white font-bold py-2 px-4 md:px-6 rounded-full text-sm md:text-md shadow-lg" onClick={() => setIsAdmin(false)}>
               Switch to User View
             </button>
           </div>
         </div>
-        <div className="bg-white rounded-xl shadow-lg p-6 border border-[#7ACDB9]/40 mb-8">
-          <h2 className="text-xl font-semibold mb-4">All Bookings</h2>
+        <div className="bg-white rounded-xl shadow-lg p-2 md:p-6 border border-[#7ACDB9]/40 mb-4 md:mb-8">
+          <h2 className="text-lg md:text-xl font-semibold mb-2 md:mb-4">All Bookings</h2>
           {bookings.length === 0 ? (
-            <p className="text-gray-500">No bookings yet.</p>
+            <p className="text-gray-500 text-sm md:text-base">No bookings yet.</p>
           ) : (
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b">
-                  <th className="py-2 px-4">#</th>
-                  <th className="py-2 px-4">Name</th>
-                  <th className="py-2 px-4">Phone</th>
-                  <th className="py-2 px-4">Startups</th>
-                  <th className="py-2 px-4">Room</th>
-                </tr>
-              </thead>
-              <tbody>
-                {bookings.map((b, i) => {
-                  // Find the room for the first startup in the booking
-                  const firstStartupId = b.startups[0];
-                  const room = rooms.find(r => r.startups.some(st => st.id === firstStartupId));
-                  const roomName = room ? room.name : '';
-                  const startupNames = b.startups.map(id => allStartups.get(id)?.name || id).join(', ');
-
-                  return (
-                    <tr key={b.id || i} className="border-b hover:bg-[#7ACDB9]/10">
-                      <td className="py-2 px-4 font-semibold">{i + 1}</td>
-                      <td className="py-2 px-4">{b.name}</td>
-                      <td className="py-2 px-4">{b.phone}</td>
-                      <td className="py-2 px-4">{startupNames}</td>
-                      <td className="py-2 px-4">{roomName}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className="min-w-[500px] w-full text-left border-collapse text-xs md:text-base">
+                <thead>
+                  <tr className="border-b">
+                    <th className="py-2 px-4">#</th>
+                    <th className="py-2 px-4">Name</th>
+                    <th className="py-2 px-4">Phone</th>
+                    <th className="py-2 px-4">Startups</th>
+                    <th className="py-2 px-4">Room</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bookings.map((b, i) => {
+                    const firstStartupId = b.startups[0];
+                    const room = rooms.find(r => r.startups.some(st => st.id === firstStartupId));
+                    const roomName = room ? room.name : '';
+                    const startupNames = b.startups.map(id => allStartups.get(id)?.name || id).join(', ');
+                    return (
+                      <tr key={b.id || i} className="border-b hover:bg-[#7ACDB9]/10">
+                        <td className="py-2 px-4 font-semibold">{i + 1}</td>
+                        <td className="py-2 px-4">{b.name}</td>
+                        <td className="py-2 px-4">{b.phone}</td>
+                        <td className="py-2 px-4">{startupNames}</td>
+                        <td className="py-2 px-4">{roomName}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
-        {/* Table for each startup */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
           {Object.entries(startupBookings).map(([startup, users]) => {
             const roomName = users[0]?.room || '';
             return (
-              <div key={startup} className="bg-white rounded-xl shadow-lg p-6 border border-[#7ACDB9]/40">
-                <h3 className="text-lg font-bold mb-2 text-[#2B4A3D]">{startup}</h3>
-                <div className="text-sm text-gray-500 mb-2">Room: <span className="font-semibold text-[#2B4A3D]">{roomName}</span></div>
+              <div key={startup} className="bg-white rounded-xl shadow-lg p-2 md:p-6 border border-[#7ACDB9]/40">
+                <h3 className="text-base md:text-lg font-bold mb-1 md:mb-2 text-[#2B4A3D]">{startup}</h3>
+                <div className="text-xs md:text-sm text-gray-500 mb-1 md:mb-2">Room: <span className="font-semibold text-[#2B4A3D]">{roomName}</span></div>
                 {users.length === 0 ? (
-                  <p className="text-gray-500">No bookings for this startup.</p>
+                  <p className="text-gray-500 text-xs md:text-base">No bookings for this startup.</p>
                 ) : (
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="py-2 px-4">#</th>
-                        <th className="py-2 px-4">Name</th>
-                        <th className="py-2 px-4">Phone</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {users.map((u, idx) => (
-                        <tr key={idx} className="border-b hover:bg-[#7ACDB9]/10">
-                          <td className="py-2 px-4 font-semibold">{idx + 1}</td>
-                          <td className="py-2 px-4">{u.name}</td>
-                          <td className="py-2 px-4">{u.phone}</td>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-[300px] w-full text-left border-collapse text-xs md:text-base">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="py-2 px-4">#</th>
+                          <th className="py-2 px-4">Name</th>
+                          <th className="py-2 px-4">Phone</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {users.map((u, idx) => (
+                          <tr key={idx} className="border-b hover:bg-[#7ACDB9]/10">
+                            <td className="py-2 px-4 font-semibold">{idx + 1}</td>
+                            <td className="py-2 px-4">{u.name}</td>
+                            <td className="py-2 px-4">{u.phone}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </div>
             );
@@ -443,8 +437,15 @@ function App() {
         <div className="min-h-screen bg-gradient-to-br from-white via-green-50 to-green-100">
           <div className="container mx-auto px-4 py-8">
             {/* Branding Logo */}
-            <div className="flex justify-center mb-10">
+            <div className="flex justify-center mb-10 flex-col items-center">
               <img src={brandingLogo} alt="Tamkeen Riyada Logo" className="h-20 md:h-28" />
+              <button
+                className="flex md:hidden mt-4 bg-[#7ACDB9] hover:bg-[#5bb99e] text-white font-bold py-2 px-4 rounded-full shadow items-center gap-2 transition-all"
+                onClick={() => setShowAdminLogin(true)}
+                style={{ boxShadow: '0 4px 24px 0 rgba(122,205,185,0.15)' }}
+              >
+                <Shield className="w-5 h-5" /> Admin Login
+              </button>
             </div>
             {/* Header */}
             <div className="text-center mb-12">
