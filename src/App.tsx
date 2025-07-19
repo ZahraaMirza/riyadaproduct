@@ -28,21 +28,20 @@ interface AppData {
 const DEFAULT_ROOMS: Room[] = [
   {
     id: 'room1',
-    name: 'Room 1',
+    name: 'Room 1 - Studio',
     startups: [
       { id: '1', name: 'Tamam', spots: 5, room_id: 'room1' },
       { id: '2', name: 'Cater Me', spots: 5, room_id: 'room1' },
-      { id: '3', name: 'TellSaleem', spots: 5, room_id: 'room1' },
-      { id: '4', name: 'Twazn', spots: 5, room_id: 'room1' }
+      { id: '3', name: 'TellSaleem', spots: 5, room_id: 'room1' }
     ]
   },
   {
     id: 'room2',
-    name: 'Room 2',
+    name: 'Room 2 - Riyada Hub',
     startups: [
-      { id: '5', name: 'Soor', spots: 5, room_id: 'room2' },
-      { id: '6', name: 'Rentat', spots: 5, room_id: 'room2' },
-      { id: '7', name: 'Academity', spots: 5, room_id: 'room2' }
+      { id: '4', name: 'Soor', spots: 5, room_id: 'room2' },
+      { id: '5', name: 'Rentat', spots: 5, room_id: 'room2' },
+      { id: '6', name: 'Academity', spots: 5, room_id: 'room2' }
     ]
   }
 ];
