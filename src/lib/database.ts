@@ -122,8 +122,7 @@ export const initializeDefaultData = async (): Promise<void> => {
       { id: '2', name: 'Cater Me', spots: 4, room_id: 'room1' },
       { id: '3', name: 'TellSaleem', spots: 4, room_id: 'room1' },
       { id: '4', name: 'Soor', spots: 4, room_id: 'room2' },
-      { id: '5', name: 'Rentat', spots: 4, room_id: 'room2' },
-      { id: '6', name: 'Academity', spots: 4, room_id: 'room2' }
+      { id: '5', name: 'Rentat', spots: 4, room_id: 'room2' }
     ])
 
   if (startupsError) {
