@@ -550,6 +550,9 @@ function App() {
                   
                   await Promise.all(updatePromises);
                   
+                  // Immediately fetch latest rooms data to update spots left in UI
+                  const updatedRooms = await getRooms();
+                  setRooms(updatedRooms);
                   setShowSuccess(true);
                   setTimeout(() => {
                     setShowSuccess(false);
