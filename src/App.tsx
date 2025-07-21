@@ -213,14 +213,15 @@ function App() {
     </div>
   );
 
-  // AdminButton: fixed, only on md and up
+  // AdminButton: fixed, responsive for all screen sizes
   const AdminButton = (
     <button
-      className="hidden md:flex fixed top-6 right-6 z-50 bg-[#7ACDB9] hover:bg-[#5bb99e] text-white font-bold py-3 px-6 rounded-full shadow-lg items-center gap-2 transition-all"
+      className="flex fixed top-6 right-6 z-50 bg-[#7ACDB9] hover:bg-[#5bb99e] text-white font-bold py-2 px-4 md:py-3 md:px-6 rounded-full shadow-lg items-center gap-2 transition-all"
       onClick={() => setShowAdminLogin(true)}
       style={{ boxShadow: '0 4px 24px 0 rgba(122,205,185,0.15)' }}
     >
-      <Shield className="w-5 h-5" /> Admin Login
+      <Shield className="w-5 h-5" />
+      <span className="hidden md:inline">Admin Login</span>
     </button>
   );
 
@@ -540,7 +541,7 @@ function App() {
       <div className="min-h-screen bg-gradient-to-br from-white via-green-50 to-green-100">
         <div className="container mx-auto px-4 py-8">
           {/* Branding Logo */}
-          <div className="flex justify-center mb-10">
+          <div className="flex justify-center mb-10 pt-16">
             <img src={brandingLogo} alt="Tamkeen Riyada Logo" className="h-20 md:h-28" />
           </div>
           {/* Header */}
