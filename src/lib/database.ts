@@ -105,8 +105,7 @@ export const initializeDefaultData = async (): Promise<void> => {
   const { error: roomsError } = await supabase
     .from('rooms')
     .insert([
-      { id: 'room1', name: 'Room 1 - Studio' },
-      { id: 'room2', name: 'Room 2 - Riyada Hub' }
+      { id: 'room1', name: 'Product Demo Day Startups' },
     ])
 
   if (roomsError) {
@@ -119,10 +118,9 @@ export const initializeDefaultData = async (): Promise<void> => {
     .from('startups')
     .insert([
       { id: '1', name: 'Tamam', spots: 4, room_id: 'room1' },
-      { id: '2', name: 'Cater Me', spots: 4, room_id: 'room1' },
       { id: '3', name: 'TellSaleem', spots: 4, room_id: 'room1' },
-      { id: '4', name: 'Soor', spots: 4, room_id: 'room2' },
-      { id: '5', name: 'Rentat', spots: 4, room_id: 'room2' }
+      { id: '4', name: 'Soor', spots: 4, room_id: 'room1' },
+      { id: '5', name: 'Rentat', spots: 4, room_id: 'room1' }
     ])
 
   if (startupsError) {

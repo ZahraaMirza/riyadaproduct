@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Stagewise from './components/Stagewise';
 import { Check, Users, Award, ArrowLeft, MapPin, Shield, Wifi, WifiOff } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import { 
@@ -28,19 +29,12 @@ interface AppData {
 const DEFAULT_ROOMS: Room[] = [
   {
     id: 'room1',
-    name: 'Room 1 - Studio',
+    name: 'Product Demo Day Startups',
     startups: [
       { id: '1', name: 'Tamam', spots: 4, room_id: 'room1' },
-      { id: '2', name: 'Cater Me', spots: 4, room_id: 'room1' },
-      { id: '3', name: 'TellSaleem', spots: 4, room_id: 'room1' }
-    ]
-  },
-  {
-    id: 'room2',
-    name: 'Room 2 - Riyada Hub',
-    startups: [
-      { id: '4', name: 'Soor', spots: 4, room_id: 'room2' },
-      { id: '5', name: 'Rentat', spots: 4, room_id: 'room2' }
+      { id: '3', name: 'TellSaleem', spots: 4, room_id: 'room1' },
+      { id: '4', name: 'Soor', spots: 4, room_id: 'room1' },
+      { id: '5', name: 'Rentat', spots: 4, room_id: 'room1' },
     ]
   }
 ];
@@ -49,7 +43,6 @@ const DEFAULT_ROOMS: Room[] = [
 const STORAGE_KEYS = {
   ADMIN_STATUS: 'product_demo_admin_status',
   SELECTED_STARTUPS: 'product_demo_selected_startups',
-  SELECTED_ROOM: 'product_demo_selected_room',
   USER_NAME: 'product_demo_user_name',
   USER_PHONE: 'product_demo_user_phone',
   COUNTRY_CODE: 'product_demo_country_code'
@@ -74,9 +67,9 @@ const loadFromStorage = (key: string, defaultValue: any) => {
 };
 
 function App() {
-  const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
+  const [selectedRoom, setSelectedRoom] = useState<string | null>('room1');
   const [selectedStartups, setSelectedStartups] = useState<string[]>([]);
-  const maxVotes = 2;
+  const maxSelections = 2;
   const [isAdmin, setIsAdmin] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [userName, setUserName] = useState('');
@@ -142,7 +135,8 @@ function App() {
           try {
             const newRooms = await getRooms();
             setRooms(newRooms);
-          } catch (error) {
+          } catch (error)
+ {
             console.error('Error fetching updated rooms:', error);
           }
         }
@@ -159,14 +153,12 @@ function App() {
   useEffect(() => {
     const savedAdminStatus = loadFromStorage(STORAGE_KEYS.ADMIN_STATUS, false);
     const savedSelectedStartups = loadFromStorage(STORAGE_KEYS.SELECTED_STARTUPS, []);
-    const savedSelectedRoom = loadFromStorage(STORAGE_KEYS.SELECTED_ROOM, null);
     const savedUserName = loadFromStorage(STORAGE_KEYS.USER_NAME, '');
     const savedUserPhone = loadFromStorage(STORAGE_KEYS.USER_PHONE, '');
     const savedCountryCode = loadFromStorage(STORAGE_KEYS.COUNTRY_CODE, '973');
 
     setIsAdmin(savedAdminStatus);
     setSelectedStartups(savedSelectedStartups);
-    setSelectedRoom(savedSelectedRoom);
     setUserName(savedUserName);
     setUserPhone(savedUserPhone);
     setSelectedCountryCode(savedCountryCode);
@@ -182,10 +174,6 @@ function App() {
   }, [selectedStartups]);
 
   useEffect(() => {
-    saveToStorage(STORAGE_KEYS.SELECTED_ROOM, selectedRoom);
-  }, [selectedRoom]);
-
-  useEffect(() => {
     saveToStorage(STORAGE_KEYS.USER_NAME, userName);
   }, [userName]);
 
@@ -198,20 +186,19 @@ function App() {
   }, [selectedCountryCode]);
 
   const currentRoom = rooms.find(room => room.id === selectedRoom);
-  const canVoteMore = selectedStartups.length < maxVotes;
-  const hasVotes = selectedStartups.length > 0;
+  const canSelectMore = selectedStartups.length < maxSelections;
+  const hasSelections = selectedStartups.length > 0;
 
-  const handleVote = (startupId: string) => {
+  const handleSelect = (startupId: string) => {
     if (selectedStartups.includes(startupId)) {
       setSelectedStartups(selectedStartups.filter(id => id !== startupId));
-    } else if (canVoteMore) {
+    } else if (canSelectMore) {
       setSelectedStartups([...selectedStartups, startupId]);
     }
   };
 
-  const resetVotes = () => {
+  const resetSelections = () => {
     setSelectedStartups([]);
-    setSelectedRoom(null);
   };
 
   // Connection status indicator
@@ -242,7 +229,7 @@ function App() {
     const allStartups = new Map<string, { name: string; roomName: string }>();
     rooms.forEach(room => {
         room.startups.forEach(startup => {
-            allStartups.set(startup.id, { name: startup.name, roomName: room.name });
+            allStartups.set(startup.id, { name: startup.name, roomName: 'Product Demo Day Startups' });
         });
     });
 
@@ -330,7 +317,7 @@ function App() {
                   {bookings.map((b, i) => {
                     const firstStartupId = b.startups[0];
                     const room = rooms.find(r => r.startups.some(st => st.id === firstStartupId));
-                    const roomName = room ? room.name : '';
+                    const roomName = room ? 'Product Demo Day Startups' : '';
                     const startupNames = b.startups.map(id => allStartups.get(id)?.name || id).join(', ');
                     return (
                       <tr key={b.id || i} className="border-b hover:bg-[#7ACDB9]/10">
@@ -349,7 +336,7 @@ function App() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
           {Object.entries(startupBookings).map(([startup, users]) => {
-            const roomName = users[0]?.room || '';
+            const roomName = users[0]?.room || 'Product Demo Day Startups';
             return (
               <div key={startup} className="bg-white rounded-xl shadow-lg p-2 md:p-6 border border-[#7ACDB9]/40">
                 <h3 className="text-base md:text-lg font-bold mb-1 md:mb-2 text-[#2B4A3D]">{startup}</h3>
@@ -421,78 +408,6 @@ function App() {
             >
               Cancel
             </button>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  if (!selectedRoom) {
-    return (
-      <>
-        <ConnectionStatus />
-        {AdminButton}
-        <div className="min-h-screen bg-gradient-to-br from-white via-green-50 to-green-100">
-          <div className="container mx-auto px-4 py-8">
-            {/* Branding Logo */}
-            <div className="flex justify-center mb-10 flex-col items-center">
-              <img src={brandingLogo} alt="Tamkeen Riyada Logo" className="h-20 md:h-28" />
-              <button
-                className="flex md:hidden mt-4 bg-[#7ACDB9] hover:bg-[#5bb99e] text-white font-bold py-2 px-4 rounded-full shadow items-center gap-2 transition-all"
-                onClick={() => setShowAdminLogin(true)}
-                style={{ boxShadow: '0 4px 24px 0 rgba(122,205,185,0.15)' }}
-              >
-                <Shield className="w-5 h-5" /> Admin Login
-              </button>
-            </div>
-            {/* Header */}
-            <div className="text-center mb-12">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-[#7ACDB9] rounded-full mb-6 shadow-lg">
-                <Award className="w-10 h-10 text-white" />
-              </div>
-              <h1 className="text-5xl font-bold text-gray-900 mb-4">
-                Product Demo Day
-              </h1>
-              <p className="text-lg text-gray-600 max-w-3xl mx-auto mb-8 whitespace-pre-line">
-                🎉 Thanks for joining all the product demos!
-                <br></br>
-                <br></br>
-                🙌 It's time for the Q&A rotation—please stay, we're almost at the finish line of an amazing event! Choose up to 2 startups you'd love to sit with for questions, feedback, or just because you like them!
-                <br></br>
-                <br></br>
-                ⏳ Spots are limited, so pick wisely. If your favorites are full or you want more than 2, just ask a Spring team member and we'll help!
-              </p>
-            </div>
-
-            {/* Room Selection */}
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">Select Your Room</h2>
-              <div className="grid md:grid-cols-2 gap-8">
-                {rooms.map((room) => (
-                  <div
-                    key={room.id}
-                    className="bg-white rounded-2xl border-2 border-[#7ACDB9] p-8 cursor-pointer transition-all duration-300 hover:border-[#7ACDB9] hover:shadow-xl hover:transform hover:scale-[1.02] hover:ring-4 hover:ring-[#7ACDB9]/30"
-                    onClick={() => setSelectedRoom(room.id)}
-                  >
-                    <div className="flex items-center space-x-4 mb-6">
-                      <div className="flex items-center justify-center w-12 h-12 bg-[#7ACDB9] rounded-full">
-                        <MapPin className="w-6 h-6 text-white" />
-                      </div>
-                      <h3 className="text-2xl font-bold text-gray-900">{room.name}</h3>
-                    </div>
-                    <div className="space-y-3">
-                      <p className="text-[#7ACDB9] font-medium mb-4">Featured Startups:</p>
-                      {room.startups.map((startup) => (
-                        <div key={startup.id} className="flex items-center space-x-3">
-                          <div className="w-2 h-2 bg-[#7ACDB9] rounded-full"></div>
-                          <span className="text-[#2B4A3D] font-medium">{startup.name}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       </>
@@ -626,6 +541,7 @@ function App() {
 
   return (
     <>
+      <Stagewise />
       <ConnectionStatus />
       {AdminButton}
       <div className="min-h-screen bg-gradient-to-br from-white via-green-50 to-green-100">
@@ -636,15 +552,6 @@ function App() {
           </div>
           {/* Header */}
           <div className="text-center mb-12">
-            <div className="flex items-center justify-center space-x-4 mb-6">
-              <button
-                onClick={resetVotes}
-                className="flex items-center space-x-2 text-[#7ACDB9] hover:text-[#5bb99e] transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-                <span>Back to Room Selection</span>
-              </button>
-            </div>
             <div className="inline-flex items-center justify-center w-20 h-20 bg-[#7ACDB9] rounded-full mb-6 shadow-lg">
               <Award className="w-10 h-10 text-white" />
             </div>
@@ -652,25 +559,25 @@ function App() {
               Product Demo Day
             </h1>
             <div className="inline-block bg-[#7ACDB9]/20 text-[#2B4A3D] px-6 py-2 rounded-full text-lg font-semibold mb-4">
-              {currentRoom?.name} - Startup Voting
+              Startup Selection
             </div>
             <p className="text-lg text-gray-600 max-w-3xl mx-auto mb-6">
-              Please vote for up to <span className="font-semibold text-[#7ACDB9]">2 startups</span> in this room.
+              Please select up to <span className="font-semibold text-[#7ACDB9]">2 startups</span>.
             </p>
           </div>
 
-          {/* Voting Status */}
+          {/* Selection Status */}
           <div className="max-w-6xl mx-auto mb-8">
             <div className="bg-white rounded-2xl shadow-xl p-6 border border-[#7ACDB9]/40">
               <div className="flex items-center space-x-3">
                 <Users className="w-6 h-6 text-[#7ACDB9]" />
                 <span className="text-lg font-semibold text-gray-900">
-                  Voted: {selectedStartups.length} / {maxVotes} startups
+                  Selected: {selectedStartups.length} / {maxSelections} startups
                 </span>
               </div>
-              {hasVotes && (
+              {hasSelections && (
                 <div className="mt-4 pt-4 border-t border-[#7ACDB9]/40">
-                  <p className="text-sm text-gray-600 mb-2">Your votes:</p>
+                  <p className="text-sm text-gray-600 mb-2">Your selections:</p>
                   <div className="flex flex-wrap gap-3">
                     {selectedStartups.map(startupId => {
                       const startup = currentRoom?.startups.find(s => s.id === startupId);
@@ -686,13 +593,13 @@ function App() {
             </div>
           </div>
 
-          {/* Startup Voting Options */}
+          {/* Startup Selection Options */}
           <div className="max-w-6xl mx-auto">
             <div className="grid gap-8">
-              {currentRoom?.startups.map((startup) => {
-                const isVoted = selectedStartups.includes(startup.id);
-                const spotsLeft = startup.spots - (isVoted ? 1 : 0);
-                const isFull = startup.spots <= 0 && !isVoted;
+              {rooms.flatMap(room => room.startups).map((startup) => {
+                const isSelected = selectedStartups.includes(startup.id);
+                const spotsLeft = startup.spots - (isSelected ? 1 : 0);
+                const isFull = startup.spots <= 0 && !isSelected;
                 return (
                   <React.Fragment key={startup.id}>
                     <div
@@ -700,33 +607,33 @@ function App() {
                         relative overflow-hidden rounded-2xl border-2 transition-all duration-300 shadow-lg
                         ${isFull
                           ? 'border-gray-300 bg-gray-100 opacity-70 cursor-not-allowed'
-                          : isVoted
+                          : isSelected
                             ? 'border-[#7ACDB9] bg-[#7ACDB9] shadow-xl ring-4 ring-[#7ACDB9]/30'
                             : 'border-[#7ACDB9] bg-white'}
                       `}
                       onClick={() => {
-                        if (!isFull) handleVote(startup.id)
+                        if (!isFull) handleSelect(startup.id)
                       }}
-                      style={{ cursor: canVoteMore || isVoted ? 'pointer' : 'not-allowed', opacity: canVoteMore || isVoted ? 1 : 0.6 }}
+                      style={{ cursor: canSelectMore || isSelected ? 'pointer' : 'not-allowed', opacity: canSelectMore || isSelected ? 1 : 0.6 }}
                     >
                       <div className="p-8">
                         <div className="flex items-start justify-between mb-6">
                           <div className="flex-1">
                             <div className="flex items-center space-x-4 mb-3">
                               <h3 className={`text-2xl font-bold ${
-                                isFull ? 'text-gray-400' : isVoted ? 'text-[#2B4A3D]' : 'text-gray-900'
+                                isFull ? 'text-gray-400' : isSelected ? 'text-[#2B4A3D]' : 'text-gray-900'
                               }`}>
                                 {startup.name}
                               </h3>
-                              {isVoted && (
+                              {isSelected && (
                                 <div className="flex items-center space-x-2 bg-[#7ACDB9] text-white px-4 py-2 rounded-full text-sm font-medium shadow-md">
                                   <Check className="w-4 h-4" />
-                                  <span>Voted</span>
+                                  <span>Selected</span>
                                 </div>
                               )}
                             </div>
                             <div className="text-sm text-gray-500 mt-2">
-                              {isFull && !isVoted ? (
+                              {isFull && !isSelected ? (
                                 <span className="text-gray-400 font-semibold">Full</span>
                               ) : (
                                 <span>{spotsLeft} spots left</span>
@@ -746,7 +653,7 @@ function App() {
           <div className="max-w-6xl mx-auto mt-12 text-center">
             <div className="bg-white rounded-xl p-6 shadow-lg border border-[#7ACDB9]/40">
               <p className="text-gray-600 font-medium">
-                🚀 Vote for up to 2 startups in this room
+                🚀 Select up to 2 startups
               </p>
             </div>
           </div>
@@ -760,7 +667,7 @@ function App() {
                 setShowForm(true);
               }}
             >
-              Confirm Vote
+              Confirm Selection
             </button>
           </div>
         </div>
