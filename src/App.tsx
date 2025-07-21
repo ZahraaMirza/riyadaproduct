@@ -31,10 +31,10 @@ const DEFAULT_ROOMS: Room[] = [
     id: 'room1',
     name: 'Product Demo Day Startups',
     startups: [
-      { id: '1', name: 'Tamam', spots: 4, room_id: 'room1' },
-      { id: '3', name: 'TellSaleem', spots: 4, room_id: 'room1' },
-      { id: '4', name: 'Soor', spots: 4, room_id: 'room1' },
-      { id: '5', name: 'Rentat', spots: 4, room_id: 'room1' },
+      { id: '1', name: 'Tamam', spots: 5, room_id: 'room1' },
+      { id: '3', name: 'TellSaleem', spots: 5, room_id: 'room1' },
+      { id: '4', name: 'Soor', spots: 5, room_id: 'room1' },
+      { id: '5', name: 'Rentat', spots: 5, room_id: 'room1' },
     ]
   }
 ];
@@ -69,7 +69,7 @@ const loadFromStorage = (key: string, defaultValue: any) => {
 function App() {
   const [selectedRoom, setSelectedRoom] = useState<string | null>('room1');
   const [selectedStartups, setSelectedStartups] = useState<string[]>([]);
-  const maxSelections = 2;
+  const maxSelections = 1;
   const [isAdmin, setIsAdmin] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [userName, setUserName] = useState('');
@@ -552,14 +552,10 @@ function App() {
             <h1 className="text-5xl font-bold text-gray-900 mb-4">
               Product Demo Day
             </h1>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto mb-8 whitespace-pre-line">
-{`🎉 Thanks for joining all the product demos!
-
-🙌 It's time for the Q&A rotation—please stay, we're almost at the finish line of an amazing event! Choose up to 2 startups you'd love to sit with for questions, feedback, or just because you like them!
-
-⏳ Spots are limited, so pick wisely. If your favorites are full or you want more than 2, just ask a Spring team member and we'll help!`}
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto mb-6">
+              Please select <span className="font-semibold text-[#7ACDB9]">1 startup</span>.
             </p>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center">Select Your Startups</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center">Select Your Startup</h2>
           </div>
 
           {/* Selection Status */}
@@ -568,12 +564,12 @@ function App() {
               <div className="flex items-center space-x-3">
                 <Users className="w-6 h-6 text-[#7ACDB9]" />
                 <span className="text-lg font-semibold text-gray-900">
-                  Selected: {selectedStartups.length} / {maxSelections} startups
+                  Selected: {selectedStartups.length} / {maxSelections} startup
                 </span>
               </div>
               {hasSelections && (
                 <div className="mt-4 pt-4 border-t border-[#7ACDB9]/40">
-                  <p className="text-sm text-gray-600 mb-2">Your selections:</p>
+                  <p className="text-sm text-gray-600 mb-2">Your selection:</p>
                   <div className="flex flex-wrap gap-3">
                     {selectedStartups.map(startupId => {
                       const startup = currentRoom?.startups.find(s => s.id === startupId);
@@ -649,7 +645,7 @@ function App() {
           <div className="max-w-6xl mx-auto mt-12 text-center">
             <div className="bg-white rounded-xl p-6 shadow-lg border border-[#7ACDB9]/40">
               <p className="text-gray-600 font-medium">
-                🚀 Select up to 2 startups
+                🚀 Select 1 startup
               </p>
             </div>
           </div>
