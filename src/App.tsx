@@ -558,12 +558,14 @@ function App() {
             <h1 className="text-5xl font-bold text-gray-900 mb-4">
               Product Demo Day
             </h1>
-            <div className="inline-block bg-[#7ACDB9]/20 text-[#2B4A3D] px-6 py-2 rounded-full text-lg font-semibold mb-4">
-              Startup Selection
-            </div>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto mb-6">
-              Please select up to <span className="font-semibold text-[#7ACDB9]">2 startups</span>.
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto mb-8 whitespace-pre-line">
+{`🎉 Thanks for joining all the product demos!
+
+🙌 It's time for the Q&A rotation—please stay, we're almost at the finish line of an amazing event! Choose up to 2 startups you'd love to sit with for questions, feedback, or just because you like them!
+
+⏳ Spots are limited, so pick wisely. If your favorites are full or you want more than 2, just ask a Spring team member and we'll help!`}
             </p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4 text-center">Select Your Startups</h2>
           </div>
 
           {/* Selection Status */}
