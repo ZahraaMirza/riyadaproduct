@@ -310,14 +310,10 @@ function App() {
                     <th className="py-2 px-4">Name</th>
                     <th className="py-2 px-4">Phone</th>
                     <th className="py-2 px-4">Startups</th>
-                    <th className="py-2 px-4">Room</th>
                   </tr>
                 </thead>
                 <tbody>
                   {bookings.map((b, i) => {
-                    const firstStartupId = b.startups[0];
-                    const room = rooms.find(r => r.startups.some(st => st.id === firstStartupId));
-                    const roomName = room ? 'Product Demo Day Startups' : '';
                     const startupNames = b.startups.map(id => allStartups.get(id)?.name || id).join(', ');
                     return (
                       <tr key={b.id || i} className="border-b hover:bg-[#7ACDB9]/10">
@@ -325,7 +321,6 @@ function App() {
                         <td className="py-2 px-4">{b.name}</td>
                         <td className="py-2 px-4">{b.phone}</td>
                         <td className="py-2 px-4">{startupNames}</td>
-                        <td className="py-2 px-4">{roomName}</td>
                       </tr>
                     );
                   })}
@@ -336,11 +331,9 @@ function App() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
           {Object.entries(startupBookings).map(([startup, users]) => {
-            const roomName = users[0]?.room || 'Product Demo Day Startups';
             return (
               <div key={startup} className="bg-white rounded-xl shadow-lg p-2 md:p-6 border border-[#7ACDB9]/40">
                 <h3 className="text-base md:text-lg font-bold mb-1 md:mb-2 text-[#2B4A3D]">{startup}</h3>
-                <div className="text-xs md:text-sm text-gray-500 mb-1 md:mb-2">Room: <span className="font-semibold text-[#2B4A3D]">{roomName}</span></div>
                 {users.length === 0 ? (
                   <p className="text-gray-500 text-xs md:text-base">No bookings for this startup.</p>
                 ) : (
